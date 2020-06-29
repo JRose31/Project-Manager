@@ -2,6 +2,7 @@ import sqlite3
 import tkinter as tk
 from tkinter.ttk import *
 from datetime import datetime
+from functools import partial
 
 
 
@@ -78,7 +79,7 @@ def insert_task():
 
 
 def createProject():
-
+    entryWindow.win.destroy()
     win = tk.Tk()
     win.title('Project Manager Creater')
 
@@ -122,20 +123,46 @@ def createProject():
 
     win.mainloop()
 
+def showProjects():
+    entryWindow.win.destroy()
+    win = tk.Tk()
+    win.title('Projects')
+    welcome = tk.Label(win, text="Your Projects", font='Helvetica 14 bold').grid(row=0)
+    sqliteConnection = sqlite3.connect('projectManage.db')
+    cursor = sqliteConnection.cursor()
+    Query = "SELECT projectName FROM project_one"
+    projectQuery = cursor.execute(Query)
+    projects = list(i for i in projectQuery)
+    counter = 1
+    print(projects)
+    for i in projects:
+        projectName = i[0]
+        print(projectName)
+        tk.Button(win, text=i[0], command=partial(openProject, i[0])).grid(row=counter)
+        counter += 1
+
+    win.mainloop()
+
+def openProject(projectName):
+    win = tk.Tk()
+    win.title(projectName)
+    title = tk.Label(win, text=projectName)
+    title.pack()
+
 def entryWindow():
 
-    win = tk.Tk()
-    win.title("Project Manager (1.0)")
-    welcome = tk.Label(win, text='Welcome to Project Manager 1.0!', font='Helvetica 14 bold')
+    entryWindow.win = tk.Tk()
+    entryWindow.win.title("Project Manager (1.0)")
+    welcome = tk.Label(entryWindow.win, text='Welcome to Project Manager 1.0!', font='Helvetica 14 bold')
     welcome.pack()
 
-    f1 = tk.Frame(win)
+    f1 = tk.Frame(entryWindow.win)
     f1.pack()
-    existing = tk.Button(f1, text="Existing Project")
+    existing = tk.Button(f1, text="Existing Project", command=showProjects)
     existing.grid(row=0)
     createNew = tk.Button(f1, text="Create New Project", fg=blue, command=createProject)
     createNew.grid(row=1)
 
-    win.mainloop()
+    entryWindow.win.mainloop()
 
 entryWindow()
