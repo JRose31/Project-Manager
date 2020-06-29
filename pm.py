@@ -146,8 +146,20 @@ def showProjects():
 def openProject(projectName):
     win = tk.Tk()
     win.title(projectName)
-    title = tk.Label(win, text=projectName)
+    title = tk.Label(win, text=projectName, font='Helvetica 12 bold')
     title.pack()
+    sqliteConnection = sqlite3.connect('projectManage.db')
+    cursor = sqliteConnection.cursor()
+    Query = "SELECT tasks FROM project_one WHERE projectName = ?"
+    taskQuery = cursor.execute(Query, (projectName,))
+    f1 = tk.Frame(win)
+    f1.pack()
+    counter = 0
+    for i in taskQuery:
+        tk.Label(f1, text=i[0]).grid(row=counter)
+        counter += 1
+    win.mainloop()
+
 
 def entryWindow():
 
@@ -158,7 +170,7 @@ def entryWindow():
 
     f1 = tk.Frame(entryWindow.win)
     f1.pack()
-    existing = tk.Button(f1, text="Existing Project", command=showProjects)
+    existing = tk.Button(f1, text="Existing Projects", command=showProjects)
     existing.grid(row=0)
     createNew = tk.Button(f1, text="Create New Project", fg=blue, command=createProject)
     createNew.grid(row=1)
