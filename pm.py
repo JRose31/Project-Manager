@@ -7,9 +7,19 @@ from functools import partial
 
 
 blue = '#93bbfa'
+all_tasks = []
 
 #create database
 def addProject():
+    global all_tasks
+
+    task_entries = createProject.f3.winfo_children()
+    for task in task_entries:
+        if task.winfo_class() == 'Entry':
+            task_text = task.get()
+            all_tasks.append(task_text)
+
+    print(all_tasks)
     try:
         edd = createProject.edd
         epn = createProject.epn
@@ -48,7 +58,7 @@ def addProject():
         cdate = str(datetime.now().strftime("%Y:%m:%d"))
         ddate = edd.get()
         pname = epn.get()
-        tasks = 'Test Task'
+        tasks = str(all_tasks).replace("'", "").replace("[", "").replace("]", "")
         print("Table already exists...moving on...")
 
         sqlite_insert_with_param = '''
@@ -69,13 +79,13 @@ def addProject():
             print("sqlite connection is closed")
 
 def insert_task():
-    global gridCount
-    global bt1
 
-    next_entry = tk.Entry(f3)
-    next_entry.grid(row=gridCount, column=0)
-    next_button = tk.Button(f3, text='+', fg=blue, command=insert_task).grid(row=gridCount, column=1)
-    gridCount += 1
+    next_entry = tk.Entry(createProject.f3)
+    next_entry.grid(row=createProject.gridCount, column=0)
+    getEntry = next_entry.get()
+    #all_tasks.append(getEntry)
+    next_button = tk.Button(createProject.f3, text='+', fg=blue, command=insert_task).grid(row=createProject.gridCount, column=1)
+    createProject.gridCount += 1
 
 
 def createProject():
@@ -109,12 +119,14 @@ def createProject():
 
 
 
-    f3 = tk.Frame(win)
-    f3.pack()
-    createProject.et1 = tk.Entry(f3)
+    createProject.f3 = tk.Frame(win)
+    createProject.f3.pack()
+    createProject.et1 = tk.Entry(createProject.f3)
     createProject.et1.grid(row=0, column=0)
-    bt1 = tk.Button(f3, text='+', fg=blue, command=insert_task).grid(row=0, column=1)
-    gridCount = 1
+    getEntry = createProject.et1.get()
+    #all_tasks.append(getEntry)
+    bt1 = tk.Button(createProject.f3, text='+', fg=blue, command=insert_task).grid(row=0, column=1)
+    createProject.gridCount = 1
 
     f4 = tk.Frame(win)
     f4.pack()
@@ -152,11 +164,14 @@ def openProject(projectName):
     cursor = sqliteConnection.cursor()
     Query = "SELECT tasks FROM project_one WHERE projectName = ?"
     taskQuery = cursor.execute(Query, (projectName,))
+    Querylist = list(i for i in taskQuery)
+    individualTask = (Querylist[0][0]).split(",")
+    print(individualTask)
     f1 = tk.Frame(win)
     f1.pack()
     counter = 0
-    for i in taskQuery:
-        tk.Label(f1, text=i[0]).grid(row=counter)
+    for i in individualTask:
+        tk.Label(f1, text=i).grid(row=counter)
         counter += 1
     win.mainloop()
 
