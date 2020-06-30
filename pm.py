@@ -7,6 +7,7 @@ from functools import partial
 
 
 blue = '#93bbfa'
+grey = "#e3e3e3"
 all_tasks = []
 
 #create database
@@ -93,6 +94,11 @@ def createProject():
     win = tk.Tk()
     win.title('Project Manager Creater')
 
+    f0 = tk.Frame(win)
+    f0.pack()
+    back = tk.Button(f0, text="Go back", fg='red', command=entryWindow)
+    back.pack(side='left')
+
     ftitle = tk.Frame(win)
     ftitle.pack()
     spacer0 = tk.Label(ftitle)
@@ -139,7 +145,15 @@ def showProjects():
     entryWindow.win.destroy()
     win = tk.Tk()
     win.title('Projects')
-    welcome = tk.Label(win, text="Your Projects", font='Helvetica 14 bold').grid(row=0)
+
+    f1 = tk.Frame(win)
+    f1.pack()
+    back = tk.Button(f1, text="Go back", fg='red', command=entryWindow)
+    back.pack(side='left')
+
+    f2 = tk.Frame(win)
+    f2.pack()
+    welcome = tk.Label(f2, text="Your Projects", font='Helvetica 14 bold').grid(row=0)
     sqliteConnection = sqlite3.connect('projectManage.db')
     cursor = sqliteConnection.cursor()
     Query = "SELECT projectName FROM project_one"
@@ -150,7 +164,7 @@ def showProjects():
     for i in projects:
         projectName = i[0]
         print(projectName)
-        tk.Button(win, text=i[0], command=partial(openProject, i[0])).grid(row=counter)
+        tk.Button(f2, text=i[0], command=partial(openProject, i[0])).grid(row=counter)
         counter += 1
 
     win.mainloop()
@@ -158,7 +172,14 @@ def showProjects():
 def openProject(projectName):
     win = tk.Tk()
     win.title(projectName)
-    title = tk.Label(win, text=projectName, font='Helvetica 12 bold')
+
+    f1 = tk.Frame(win)
+    f1.pack()
+    back = tk.Button(f1, text="Go back", fg='red', command=showProjects)
+    back.pack(side='left')
+
+
+    title = tk.Label(f1, text=projectName, font='Helvetica 12 bold')
     title.pack()
     sqliteConnection = sqlite3.connect('projectManage.db')
     cursor = sqliteConnection.cursor()
@@ -167,12 +188,18 @@ def openProject(projectName):
     Querylist = list(i for i in taskQuery)
     individualTask = (Querylist[0][0]).split(",")
     print(individualTask)
-    f1 = tk.Frame(win)
-    f1.pack()
+    f2 = tk.Frame(win)
+    f2.pack()
     counter = 0
     for i in individualTask:
-        tk.Label(f1, text=i).grid(row=counter)
+        tk.Label(f2, text=i).grid(row=counter)
+        tk.Checkbutton(f2, onvalue = 1, offvalue = 0).grid(row=counter, column=1)
         counter += 1
+    f3 = tk.Frame(win)
+    f3.pack()
+    complete = tk.Button(f3, text="Complete", fg=blue)
+    complete.pack()
+
     win.mainloop()
 
 
