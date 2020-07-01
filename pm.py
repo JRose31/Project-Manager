@@ -27,7 +27,7 @@ def addProject():
         cdate = str(datetime.now().strftime("%Y:%m:%d"))
         ddate = edd.get()
         pname = epn.get()
-        tasks = 'Test Task'
+        tasks = str(all_tasks).replace("'", "").replace("[", "").replace("]", "")
         sqliteConnection = sqlite3.connect('projectManage.db')
         sqlite_create_table_query = '''CREATE TABLE project_one (
                                         createDate TEXT,
