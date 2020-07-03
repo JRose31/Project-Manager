@@ -93,10 +93,41 @@ def insert_task():
 
     next_entry = tk.Entry(createProject.f3)
     next_entry.grid(row=createProject.gridCount, column=0)
-    getEntry = next_entry.get()
-    #all_tasks.append(getEntry)
     next_button = tk.Button(createProject.f3, text='+', fg=blue, command=insert_task).grid(row=createProject.gridCount, column=1)
     createProject.gridCount += 1
+
+def insert_task_existing():
+
+    next_entry = tk.Entry(openProject.f3)
+    next_entry.grid(row=openProject.gridCount, column=0)
+    next_button = tk.Button(openProject.f3, text='+', fg=blue, command=insert_task_existing).grid(row=openProject.gridCount, column=1)
+    openProject.gridCount += 1
+
+def add_task_db(projectName):
+    localTasks = []
+    counter = 0
+    task_entries = openProject.f3.winfo_children()
+    for itask in task_entries:
+        if itask.winfo_class() == 'Entry':
+            if len(itask.get()) > 1:
+                counter +=1
+
+
+    if counter > 0:
+        sqliteConnection = sqlite3.connect("projectManage.db")
+        cursor = sqliteConnection.cursor()
+
+        task_entries = openProject.f3.winfo_children()
+        for itask in task_entries:
+            if itask.winfo_class() == 'Entry':
+                task_text = itask.get()
+                localTasks.append(task_text)
+        print(localTasks)
+        sqltasks = ", " + str(localTasks).replace("' ", "").replace("'", "").replace("[", "").replace("]", "")
+        update_tasks = "UPDATE project_one SET tasks = tasks || ? WHERE projectName = ?"
+        cursor.execute(update_tasks, (sqltasks, projectName))
+        sqliteConnection.commit()
+
 
 tasks = {}
 def deleteTask(task):
@@ -122,6 +153,7 @@ def nayDeletion():
     deleteTask.win.destroy()
 
 def confirmDeletion():
+
     print("Deletetion confirmed")
     print("Delete task at index: ",deleteTask.delTask)
     print("From project: ", deleteTask.project)
@@ -139,16 +171,22 @@ def confirmDeletion():
     updateQuery = "UPDATE project_one SET tasks = ? WHERE projectName = ?"
     commitUpdate = cursor.execute(updateQuery, (sqltasks, deleteTask.project))
     sqliteConnection.commit()
+    deleteTask.win.destroy()
+    openProject(deleteTask.project, refresh=True)
 
+#createProjectOpen = False
 def createProject():
-    entryWindow.win.destroy()
+    '''global createProjectOpen
+
+    createProjectOpen = True'''
+
     createProject.win = tk.Tk()
     createProject.win.title('Project Manager Creater')
 
-    f0 = tk.Frame(createProject.win)
+    '''f0 = tk.Frame(createProject.win)
     f0.pack()
     back = tk.Button(f0, text="Go back", fg='red', command=entryWindow)
-    back.pack(side='left')
+    back.pack(side='left')'''
 
     ftitle = tk.Frame(createProject.win)
     ftitle.pack()
@@ -187,8 +225,6 @@ def createProject():
     createProject.f3.pack()
     createProject.et1 = tk.Entry(createProject.f3)
     createProject.et1.grid(row=0, column=0)
-    getEntry = createProject.et1.get()
-    #all_tasks.append(getEntry)
     bt1 = tk.Button(createProject.f3, text='+', fg=blue, command=insert_task).grid(row=0, column=1)
     createProject.gridCount = 1
 
@@ -199,16 +235,22 @@ def createProject():
 
     createProject.win.mainloop()
 
+
+showProjectsOpen = False
 def showProjects():
-    win = tk.Tk()
-    win.title('Projects')
+    global showProjectsOpen
+    if showProjectsOpen == True:
+        showProjects.win.destroy()
+    showProjectsOpen = True
+    showProjects.win = tk.Tk()
+    showProjects.win.geometry("200x250")
+    showProjects.win.title('Projects')
 
-    f1 = tk.Frame(win)
-    f1.pack()
-    back = tk.Button(f1, text="Go back", fg='red', command=entryWindow)
-    back.pack(side='left')
+    f1 = tk.Frame(showProjects.win)
+    f1.pack(anchor='nw')
+    tk.Label(f1).pack()
 
-    f2 = tk.Frame(win)
+    f2 = tk.Frame(showProjects.win)
     f2.pack()
     welcome = tk.Label(f2, text="Your Projects", font='Helvetica 14 bold').grid(row=0)
     sqliteConnection = sqlite3.connect('projectManage.db')
@@ -223,25 +265,38 @@ def showProjects():
         print(projectName)
         tk.Button(f2, text=i[0], command=partial(openProject, i[0])).grid(row=counter)
         counter += 1
+    global openProjectOpen
 
-    entryWindow.win.destroy()
-    openProject.win.destroy()
-    win.mainloop()
+    if openProjectOpen == True:
+        openProject.win.destroy()
+    showProjects.win.mainloop()
 
-def openProject(projectName):
+openProjectOpen = False
+
+def openProject(projectName, refresh=False):
+    if refresh == True:
+        add_task_db(projectName)
+        openProject.win.destroy()
+    global openProjectOpen
+    openProjectOpen = True
     global tasks
     openProject.currentProject = projectName
     openProject.win = tk.Tk()
+    openProject.win.geometry("350x300")
     openProject.win.title(projectName)
+
+    f0 = tk.Frame(openProject.win)
+    f0.pack(anchor='nw')
+    back = tk.Button(f0, text="Go back", fg='red', borderwidth=1, relief="solid", command=showProjects)
+    back.pack()
+    tk.Label(f0).pack()
 
     f1 = tk.Frame(openProject.win)
     f1.pack()
-    back = tk.Button(f1, text="Go back", fg='red', command=showProjects)
-    back.pack(side='left')
-
-
-    title = tk.Label(f1, text=projectName, font='Helvetica 12 bold')
+    title = tk.Label(f1, text=projectName, font='Helvetica 14 bold')
     title.pack()
+    tk.Label(f1).pack()
+
     sqliteConnection = sqlite3.connect('projectManage.db')
     cursor = sqliteConnection.cursor()
     Query = "SELECT tasks FROM project_one WHERE projectName = ?"
@@ -257,13 +312,23 @@ def openProject(projectName):
         task = tk.Button(f2, text=i)
         tasks[task] = counter
         task.bind("<Button-1>", deleteTask)
-        task.grid(row=counter)
-        tk.Checkbutton(f2, onvalue = 1, offvalue = 0).grid(row=counter, column=1)
+        task.pack(anchor='w')
         counter += 1
-    f3 = tk.Frame(openProject.win)
-    f3.pack()
-    complete = tk.Button(f3, text="Complete", fg=blue)
-    complete.pack()
+    tk.Label(f2).pack()
+    addTasks = tk.Label(f2, text="Add Tasks", font="Helvetica 13 bold")
+    addTasks.pack()
+
+    openProject.f3 = tk.Frame(openProject.win)
+    openProject.f3.pack()
+    openProject.et1 = tk.Entry(openProject.f3)
+    openProject.et1.grid(row=0, column=0)
+    bt1 = tk.Button(openProject.f3, text='+', fg=blue, command=insert_task_existing).grid(row=0, column=1)
+    openProject.gridCount = 1
+
+    f4 = tk.Frame(openProject.win)
+    f4.pack()
+    refresh = tk.Button(f4, text="Refresh", fg=blue, command=lambda: openProject(projectName, refresh=True))
+    refresh.pack()
 
     openProject.win.mainloop()
 
@@ -271,9 +336,12 @@ def openProject(projectName):
 def entryWindow():
 
     entryWindow.win = tk.Tk()
+    entryWindow.win.geometry("300x250")
     entryWindow.win.title("Project Manager (1.0)")
-    welcome = tk.Label(entryWindow.win, text='Welcome to Project Manager 1.0!', font='Helvetica 14 bold')
+    tk.Label(entryWindow.win).pack()
+    welcome = tk.Label(entryWindow.win, text='Welcome to \n Project Manager 1.0!', font='Helvetica 14 bold')
     welcome.pack()
+    tk.Label(entryWindow.win).pack()
 
     f1 = tk.Frame(entryWindow.win)
     f1.pack()
@@ -281,6 +349,10 @@ def entryWindow():
     existing.grid(row=0)
     createNew = tk.Button(f1, text="Create New Project", fg=blue, command=createProject)
     createNew.grid(row=1)
+
+    f2 = tk.Frame(entryWindow.win)
+    f2.pack(side="bottom")
+    tk.Label(f2, text="Created by Jamaine D Roseborough Jr \n github.com/JRose31").pack()
 
     entryWindow.win.mainloop()
 
