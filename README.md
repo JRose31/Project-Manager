@@ -14,6 +14,7 @@ A project manager application that enables you to create task associated to spec
 
 #### Requirements
 - Python 3
+
 *If you haven't already, download Python [here](https://www.python.org/downloads/)*
 
 
