@@ -145,11 +145,11 @@ def deleteTask(task):
     ops.pack()
     yes = tk.Button(ops, text="Yes", command=confirmDeletion)
     yes.grid(row=0, column=0)
-    no = tk.Button(ops, text="No", command=nayDeletion)
+    no = tk.Button(ops, text="No", command=nayTaskDeletion)
     no.grid(row=0, column=1)
     deleteTask.win.mainloop()
 
-def nayDeletion():
+def nayTaskDeletion():
     deleteTask.win.destroy()
 
 def confirmDeletion():
@@ -174,19 +174,11 @@ def confirmDeletion():
     deleteTask.win.destroy()
     openProject(deleteTask.project, refresh=True)
 
-#createProjectOpen = False
-def createProject():
-    '''global createProjectOpen
 
-    createProjectOpen = True'''
+def createProject():
 
     createProject.win = tk.Tk()
     createProject.win.title('Project Manager Creater')
-
-    '''f0 = tk.Frame(createProject.win)
-    f0.pack()
-    back = tk.Button(f0, text="Go back", fg='red', command=entryWindow)
-    back.pack(side='left')'''
 
     ftitle = tk.Frame(createProject.win)
     ftitle.pack()
@@ -235,15 +227,57 @@ def createProject():
 
     createProject.win.mainloop()
 
+def projectOptions(projectName):
+    projectOptions.win = tk.Tk()
+    projectOptions.win.title("Project Options")
+    f1 = tk.Frame(projectOptions.win)
+    f1.pack()
+    title = tk.Label(f1, text=projectName).pack()
+    f2 = tk.Frame(projectOptions.win)
+    f2.pack()
+    delete = tk.Button(f2, text="Delete Project", command=lambda: deleteConfirm(projectName))
+    delete.grid(row=0, column=0)
+    duedate = tk.Button(f2, text="Change Due Date")
+    duedate.grid(row=0, column=1)
+    projectOptions.win.mainloop()
+
+def deleteConfirm(projectName):
+    deleteConfirm.win= tk.Tk()
+    deleteConfirm.win.title("Confirm Project Deletion")
+    f0 = tk.Frame(deleteConfirm.win)
+    f0.pack()
+    tk.Label(f0, text=("Delete project:")).grid(row=0)
+    tk.Label(f0, text=projectName, font='Helvetica 12 bold').grid(row=0, column=1)
+    f1 = tk.Frame(deleteConfirm.win)
+    f1.pack()
+    yes = tk.Button(f1, text="Yes", fg='green', command=lambda: confirmProjectDeletion(projectName))
+    yes.grid(row=0)
+    no = tk.Button(f1, text="No", fg='red', command=nayProjectDeletion)
+    no.grid(row=0, column=1)
+    deleteConfirm.win.mainloop()
+
+def nayProjectDeletion():
+    deleteConfirm.win.destroy()
+
+def confirmProjectDeletion(projectName):
+    sqliteConnection = sqlite3.connect("projectManage.db")
+    cursor = sqliteConnection.cursor()
+    deleteQuery = "DELETE FROM project_one WHERE projectName = ?"
+    cursor.execute(deleteQuery, (projectName,))
+    sqliteConnection.commit()
+    deleteConfirm.win.destroy()
+    projectOptions.win.destroy()
+    showProjects()
+
 
 showProjectsOpen = False
 def showProjects():
     global showProjectsOpen
-    if showProjectsOpen == True:
-        showProjects.win.destroy()
+    '''if showProjectsOpen == True:
+        showProjects.win.destroy()'''
     showProjectsOpen = True
     showProjects.win = tk.Tk()
-    showProjects.win.geometry("200x250")
+    showProjects.win.geometry("350x250")
     showProjects.win.title('Projects')
 
     f1 = tk.Frame(showProjects.win)
@@ -253,17 +287,26 @@ def showProjects():
     f2 = tk.Frame(showProjects.win)
     f2.pack()
     welcome = tk.Label(f2, text="Your Projects", font='Helvetica 14 bold').grid(row=0)
+    dds = tk.Label(f2, text="Due Date", font='Helvetica 14 bold').grid(row=0, column=1)
     sqliteConnection = sqlite3.connect('projectManage.db')
     cursor = sqliteConnection.cursor()
     Query = "SELECT projectName FROM project_one"
     projectQuery = cursor.execute(Query)
     projects = list(i for i in projectQuery)
+    sqliteConnection.close()
+    sqliteConnection = sqlite3.connect('projectManage.db')
+    cursor = sqliteConnection.cursor()
+    Query = "SELECT dueDate FROM project_one"
+    ddQuery = cursor.execute(Query)
+    duedates = list(i for i in ddQuery)
     counter = 1
     print(projects)
-    for i in projects:
+    for i, n in zip(projects, duedates):
         projectName = i[0]
         print(projectName)
         tk.Button(f2, text=i[0], command=partial(openProject, i[0])).grid(row=counter)
+        tk.Label(f2, text=n[0]).grid(row=counter, column=1)
+        tk.Button(f2, text="...", command=partial(projectOptions, i[0])).grid(row=counter, column=2)
         counter += 1
     global openProjectOpen
 
@@ -291,11 +334,30 @@ def openProject(projectName, refresh=False):
     back.pack()
     tk.Label(f0).pack()
 
+    f0 = tk.Frame(openProject.win)
+    f0.pack()
+    title = tk.Label(f0, text=projectName, font='Helvetica 15 bold')
+    title.pack()
+    sqliteConnection = sqlite3.connect("projectManage.db")
+    cursor = sqliteConnection.cursor()
+    Query = "SELECT projectDescription FROM project_one WHERE projectName = ?"
+    descQuery = cursor.execute(Query,(projectName,))
+    description = list(i for i in descQuery)[0][0]
+    desc = tk.Label(f0, text=description)
+    desc.pack()
+    sqliteConnection.close()
+
     f1 = tk.Frame(openProject.win)
     f1.pack()
-    title = tk.Label(f1, text=projectName, font='Helvetica 14 bold')
-    title.pack()
-    tk.Label(f1).pack()
+    sqliteConnection = sqlite3.connect("projectManage.db")
+    cursor = sqliteConnection.cursor()
+    Query = "SELECT dueDate FROM project_one WHERE projectName = ?"
+    ddQuery = cursor.execute(Query,(projectName,))
+    dd = list(i for i in ddQuery)[0][0]
+    ddlabel = tk.Label(f1, text="Due Date:", font="Helvetica 12 bold").grid(row=0)
+    ddset = tk.Label(f1, text=dd).grid(row=0, column=1)
+    tk.Label(f1).grid(row=1)
+    sqliteConnection.close()
 
     sqliteConnection = sqlite3.connect('projectManage.db')
     cursor = sqliteConnection.cursor()
@@ -307,6 +369,7 @@ def openProject(projectName, refresh=False):
 
     f2 = tk.Frame(openProject.win)
     f2.pack()
+    tk.Label(f2, text="Current Tasks", font="Helvetica 13 bold").pack()
     counter = 0
     for i in individualTask:
         task = tk.Button(f2, text=i)
