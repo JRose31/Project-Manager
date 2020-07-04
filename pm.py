@@ -237,9 +237,38 @@ def projectOptions(projectName):
     f2.pack()
     delete = tk.Button(f2, text="Delete Project", command=lambda: deleteConfirm(projectName))
     delete.grid(row=0, column=0)
-    duedate = tk.Button(f2, text="Change Due Date")
+    duedate = tk.Button(f2, text="Change Due Date", command=lambda: enterDueDate(projectName))
     duedate.grid(row=0, column=1)
     projectOptions.win.mainloop()
+
+def enterDueDate(projectName):
+    enterDueDate.win = tk.Tk()
+    title = tk.Label(enterDueDate.win, text="New Due Date", font="Helvetica 12 bold")
+    title.pack()
+
+    f1 = tk.Frame(enterDueDate.win)
+    f1.pack()
+    enterDueDate.newDate = tk.Entry(f1)
+    enterDueDate.newDate.insert(0, 'YYYY/MM/DD')
+    enterDueDate.newDate.grid(row=0)
+    submit = tk.Button(f1, text="Confirm", fg='green', command=lambda: changeDueDate(projectName))
+    submit.grid(row=0, column=1)
+
+    enterDueDate.win.mainloop()
+
+def changeDueDate(projectName):
+    newDueDate = enterDueDate.newDate.get()
+    print(newDueDate)
+    sqliteConnection = sqlite3.connect("projectManage.db")
+    cursor = sqliteConnection.cursor()
+    Query = "UPDATE project_one SET dueDate = ? WHERE projectName = ? "
+    cursor.execute(Query, (newDueDate, projectName))
+    sqliteConnection.commit()
+    sqliteConnection.close()
+    enterDueDate.win.destroy()
+    projectOptions.win.destroy()
+    showProjects.win.destroy()
+    showProjects()
 
 def deleteConfirm(projectName):
     deleteConfirm.win= tk.Tk()
